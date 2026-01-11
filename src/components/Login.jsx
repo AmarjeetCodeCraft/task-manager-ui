@@ -1,7 +1,9 @@
 import axios from "axios";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const Login = ({ onLogin }) => {
+const Login = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
@@ -11,7 +13,19 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-
+/**
+ * LOGIN COMPONENT
+ * 
+ * NOTE: This implementation uses json-server for demonstration purposes.
+ * In a production environment, this would be replaced with:
+ * 
+ * 1. POST request to /api/login (not GET with query params)
+ * 2. Server-side password hashing (bcrypt)
+ * 3. JWT tokens from server
+ * 4. HTTPS only
+ * 5. Rate limiting
+ * 6. CSRF protection
+ */
 // API URL 
     const url = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/users`;
 
@@ -19,7 +33,7 @@ const Login = ({ onLogin }) => {
       console.log("Attempting login for:", user); // for dev: checking its a valid user
 
       const response = await axios.get(url, {
-        params: { username: user, password: pass },
+        params: { username: user.trim(), password: pass.trim() },
       });
 
       if (response.data && response.data.length > 0) {
@@ -27,7 +41,7 @@ const Login = ({ onLogin }) => {
         const sessionKey = Math.random().toString(36).substring(2) + Date.now();
         localStorage.setItem("authToken", sessionKey);
         
-        onLogin();
+        navigate("/dashboard");
       } else {
         setError("Invalid credentials. Try again.");
       }
@@ -54,7 +68,10 @@ const Login = ({ onLogin }) => {
             <input
               type="text"
               value={user}
-              onChange={(e) => setUser(e.target.value)}
+              onChange={(e) => {
+                setUser(e.target.value);
+                if (error) setError("");
+              }}
               className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
               placeholder="e.g. admin"
               required
@@ -68,7 +85,10 @@ const Login = ({ onLogin }) => {
             <input
               type="password"
               value={pass}
-              onChange={(e) => setPass(e.target.value)}
+              onChange={(e) => {
+                setPass(e.target.value);
+                if (error) setError("");
+              }}
               className="w-full border border-gray-300 px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition"
               placeholder="••••••••"
               required

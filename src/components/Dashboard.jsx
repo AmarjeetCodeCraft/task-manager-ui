@@ -1,12 +1,14 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import TaskCard from "./TaskCard";
 import TaskModal from "./TaskModal";
 import ConfirmModal from "./ConfirmModal";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,19 +21,21 @@ const Dashboard = ({ onLogout }) => {
     getTasks();
   }, []);
 
-  const getTasks = async () => {
-    console.log("Fetching tasks from:", `${BASE_URL}/tasks`); //Adding dev log to check 
+  const getTasks = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await axios.get(`${BASE_URL}/tasks`);
       setTasks(res.data);
     } catch (err) {
-      console.error("Error fetching tasks:", err);
-      setError("Couldn't load tasks. Is the backend server running?");
+      setError("Failed to sync with task service.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []); // Memoized
+
+  useEffect(() => {
+    getTasks();
+  }, [getTasks]);
 
   const openAddModal = () => {
     setCurrentTask(null);
@@ -48,14 +52,14 @@ const Dashboard = ({ onLogout }) => {
     setDeleteDialog({ show: true, id });
   };
 
-  const handleConfirmDelete = async () => {
+ const handleConfirmDelete = async () => {
     try {
       await axios.delete(`${BASE_URL}/tasks/${deleteDialog.id}`);
-      // Filter out the deleted task locally so we don't have to re-fetch everything
       setTasks(prev => prev.filter(t => t.id !== deleteDialog.id));
       setDeleteDialog({ show: false, id: null });
     } catch (err) {
-      alert("Something went wrong while deleting...");
+      //use Toast notification library here
+      console.error("[Dashboard] Delete failed:", err);
     }
   };
 
@@ -64,16 +68,24 @@ const Dashboard = ({ onLogout }) => {
       if (currentTask) {
         // Update existing
         const res = await axios.put(`${BASE_URL}/tasks/${currentTask.id}`, data);
-        setTasks(tasks.map(t => t.id === currentTask.id ? res.data : t));
+        setTasks(prev => prev.map(t => t.id === currentTask.id ? res.data : t));
       } else {
         // Create new
         const res = await axios.post(`${BASE_URL}/tasks`, data);
-        setTasks([...tasks, res.data]);
+        setTasks(prev => [...prev, res.data]);
       }
       setShowModal(false);
     } catch (err) {
       console.error("Save error:", err);
-      alert("Error saving task details.");
+      const errorMsg = err.response?.data?.message || err.message || "Error saving task details.";
+      alert(`Failed to save: ${errorMsg}\n\nMake sure the backend server is running (npm run server)`);
+    }
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Logout of your account?")) {
+      localStorage.removeItem('authToken');
+      navigate('/login');
     }
   };
 
@@ -86,7 +98,7 @@ const Dashboard = ({ onLogout }) => {
           <p className="text-sm text-slate-500">Manage your daily workflow</p>
         </div>
         <button
-          onClick={onLogout}
+          onClick={handleLogout}
           className="px-5 py-2.5 border border-slate-300 rounded-lg font-medium hover:bg-slate-50 transition-all text-slate-700"
         >
           Sign Out

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { getStatusClass, formatDate } from "../utils/util";
 
-const TaskCard = ({ task, onEdit, onDelete }) => {
+const TaskCard = memo(({ task, onEdit, onDelete }) => {
   //TODO: we can work on accessibility 
   return (
     <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -45,6 +45,8 @@ const TaskCard = ({ task, onEdit, onDelete }) => {
       </div>
     </div>
   );
-};
+});
+
+TaskCard.displayName = 'TaskCard';
 
 export default TaskCard;

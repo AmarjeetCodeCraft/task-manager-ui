@@ -6,13 +6,5 @@
       "password": "admin123"
     }
   ],
-  "tasks": [
-    {
-      "id": 1,
-      "title": "Complete UI Design",
-      "description": "Create a task manager UI",
-      "status": "In Progress",
-      "dueDate": "2025-03-30"
-    }
-  ]
+  "tasks": []
 }

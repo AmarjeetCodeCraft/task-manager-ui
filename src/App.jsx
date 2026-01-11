@@ -1,52 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import Login from './components/Login';
+import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
+import Login from './components/Login';
+
+/**
+ *  NOTE:
+ * Routing architecture implements 'Guard Pattern' for session management.
+ * - ProtectedRoute: Enforces authentication for private resources.
+ * - PublicRoute: Prevents authenticated users from accessing login/signup.
+ */
+
+// Helper to centralize auth check (Senior move for maintainability)
+const isAuthenticated = () => !!localStorage.getItem('authToken');
+
+const ProtectedRoute = ({ children }) => {
+  return isAuthenticated() ? children : <Navigate to="/login" replace />;
+};
+
+const PublicRoute = ({ children }) => {
+  return !isAuthenticated() ? children : <Navigate to="/dashboard" replace />;
+};
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          setIsAuthenticated(true);
-        }
-      } catch (err) {
-        console.error("Auth sync error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkAuth();
-  }, []);
-
-  const handleLogin = () => setIsAuthenticated(true);
-
-  const handleLogout = () => {
-    if (window.confirm("Logout of your account?")) {
-      localStorage.removeItem('authToken');
-      setIsAuthenticated(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-blue-50">
-        <p className="text-blue-600 font-medium animate-pulse">Initializing session...</p>
-      </div>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-blue-50">
-      {isAuthenticated ? (
-        <Dashboard onLogout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
-    </main>
+    <Router>
+      <main className="min-h-screen bg-slate-50">
+        <Routes>
+          {/* Auth Flow */}
+          <Route 
+            path="/login" 
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            } 
+          />
+
+          {/* Business Logic */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* Default Redirection Logic */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </main>
+    </Router>
   );
 }
 
