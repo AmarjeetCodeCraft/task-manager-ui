@@ -22,6 +22,8 @@ A modern, responsive task management application built with React and TailwindCS
 - **HTTP Client**: Axios 1.13.2
 - **Backend Mock**: JSON Server 1.0.0
 - **Build Tool**: React Scripts 5.0.1
+- **Node Version**: v22.19.0
+- **npm -version**: 10.9.3
 
 ## 📦 Installation
 
